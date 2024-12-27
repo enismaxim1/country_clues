@@ -1,5 +1,6 @@
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS, cross_origin
+from flask_limiter import Limiter
 from game_logic import (
     GameState, create_new_game, save_game_state, 
     load_game_state, delete_game_state
@@ -59,11 +60,11 @@ def get_client_ip():
     # Fall back to remote_addr if no forwarded header
     return request.remote_addr
 
-# limiter = Limiter(
-#     app=app,
-#     key_func=get_client_ip,
-#     default_limits=["200 per day", "50 per hour"]
-# )
+limiter = Limiter(
+    app=app,
+    key_func=get_client_ip,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 
 @app.after_request
@@ -79,6 +80,7 @@ def log_response_info(response):
 
 
 @app.route('/api/game/create', methods=['POST'])
+@limiter.limit("20 per minute; 200 per hour; 400 per day")
 @cross_origin()
 def create_game():
     game_id = '-'.join(random.sample(WORD_LIST, 3)).lower()
@@ -87,6 +89,7 @@ def create_game():
     return jsonify({'game_id': game_id})
 
 @app.route('/api/game/<game_id>/state', methods=['GET'])
+@limiter.limit("20 per minute; 200 per hour; 400 per day")
 @cross_origin()
 def get_game_state(game_id):
     print("=== STATE ENDPOINT HIT ===")  # Debug marker
@@ -104,6 +107,7 @@ def get_game_state(game_id):
         return jsonify({'error': 'Game not found'}), 404
 
 @app.route('/api/game/<game_id>/reveal', methods=['POST'])
+@limiter.limit("20 per minute; 200 per hour; 400 per day")
 @cross_origin()
 def reveal_country(game_id):
     try:
@@ -131,6 +135,7 @@ def reveal_country(game_id):
         return jsonify({'error': str(e)}), 400
 
 @app.route('/api/game/<game_id>/question', methods=['POST'])
+@limiter.limit("20 per minute; 100 per hour; 200 per day")
 @cross_origin()
 def ask_question(game_id):
     try:
@@ -159,6 +164,7 @@ def ask_question(game_id):
     })
 
 @app.route('/api/game/<game_id>/end-turn', methods=['POST'])
+@limiter.limit("20 per minute; 200 per hour; 400 per day")
 @cross_origin()
 def end_turn(game_id):
     try:
@@ -174,7 +180,7 @@ def end_turn(game_id):
     })
 
 @app.route('/api/game/<game_id>', methods=['DELETE'])
-# @limiter.limit("30 per hour")  # Limit game deletions
+@limiter.limit("20 per minute; 200 per hour; 400 per day")
 @cross_origin()
 def end_game(game_id):
     try:
