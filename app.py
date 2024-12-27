@@ -107,7 +107,7 @@ def get_game_state(game_id):
         return jsonify({'error': 'Game not found'}), 404
 
 @app.route('/api/game/<game_id>/reveal', methods=['POST'])
-@limiter.limit("20 per minute; 200 per hour; 400 per day")
+@limiter.limit("200 per minute; 2000 per hour; 5000 per day")
 @cross_origin()
 def reveal_country(game_id):
     try:
