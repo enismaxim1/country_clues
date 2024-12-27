@@ -89,7 +89,7 @@ def create_game():
     return jsonify({'game_id': game_id})
 
 @app.route('/api/game/<game_id>/state', methods=['GET'])
-@limiter.limit("20 per minute; 200 per hour; 400 per day")
+@limiter.limit("1000 per minute; 20000 per hour; 50000 per day")
 @cross_origin()
 def get_game_state(game_id):
     print("=== STATE ENDPOINT HIT ===")  # Debug marker
